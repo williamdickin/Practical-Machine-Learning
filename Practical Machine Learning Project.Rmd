@@ -1,0 +1,62 @@
+---
+title: "Practical Machine Learning Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(caret)
+library(e1071)
+library(pROC)
+library(data.table)
+```
+
+#Load in train and test set
+```{r}
+train <- fread("pml-training.csv", data.table = FALSE)
+test <- fread("pml-testing.csv", data.table = FALSE)
+```
+
+#Look at a summary of the train set
+```{r}
+summary(train)
+```
+
+#Remove description columns from the dataset and convert to numberic
+```{r}
+train$classe <- as.factor(train$classe)
+features <- names(train)[-c(1:7, ncol(train))]
+train[, features] <- lapply(train[, features], as.numeric)
+test[, features] <- lapply(test[, features], as.numeric)
+```
+
+#Caret settings
+```{r}
+set.seed(42)
+caret.control <- trainControl(method = "repeatedcv",
+                              number = 10,
+                              repeats = 3)
+```
+
+#Fit random forest and pick the best model based on cross validation
+```{r}
+rpart.cv <- train(y = train$classe, 
+                  x = train[, features],
+                  method = "rpart",
+                  trControl = caret.control,
+                  tuneLength = 15)
+rpart.best <- rpart.cv$finalModel
+```
+
+#Predictions on test
+```{r, cache = TRUE}
+train$pred_classe <- predict(rpart.best, train, type = "class")
+
+confusionMatrix(train$pred_classe, train$classe)
+```
+
+
+```{r, cache = TRUE}
+predict(rpart.best, test, type = "class")
+```
+
