@@ -31,6 +31,7 @@ test[, features] <- lapply(test[, features], as.numeric)
 ```
 
 #Caret settings
+The following caret settings specify that 10 fold cross validation should be used and repeated 3 times to estimate out-of-sample error.
 ```{r}
 set.seed(42)
 caret.control <- trainControl(method = "repeatedcv",
@@ -39,23 +40,26 @@ caret.control <- trainControl(method = "repeatedcv",
 ```
 
 #Fit random forest and pick the best model based on cross validation
+The following code uses caret to build a random forest. The tunelength argument specifies that a grid search of 100 different parameter combinations should be tried. The one with the best out-of-sample accruacy is chosen.
 ```{r}
 rpart.cv <- train(y = train$classe, 
                   x = train[, features],
                   method = "rpart",
                   trControl = caret.control,
-                  tuneLength = 15)
+                  tuneLength = 100)
 rpart.best <- rpart.cv$finalModel
 ```
 
-#Predictions on test
+#Predictions on train
+First, I looked at our performance on test after choosing the best cross-validated model. THe model shows high accuracy, sensitivity, and specificity.
 ```{r, cache = TRUE}
 train$pred_classe <- predict(rpart.best, train, type = "class")
 
 confusionMatrix(train$pred_classe, train$classe)
 ```
 
-
+#Predictions on test
+Finally, I use the best model to predict on the test set.
 ```{r, cache = TRUE}
 predict(rpart.best, test, type = "class")
 ```

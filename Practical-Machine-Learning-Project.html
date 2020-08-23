@@ -744,19 +744,19 @@ test &lt;- fread(&quot;pml-testing.csv&quot;, data.table = FALSE)</code></pre>
 features &lt;- names(train)[-c(1:7, ncol(train))]
 train[, features] &lt;- lapply(train[, features], as.numeric)
 test[, features] &lt;- lapply(test[, features], as.numeric)</code></pre>
-<p>#Caret settings</p>
+<p>#Caret settings The following caret settings specify that 10 fold cross validation should be used and repeated 3 times to estimate out-of-sample error.</p>
 <pre class="r"><code>set.seed(42)
 caret.control &lt;- trainControl(method = &quot;repeatedcv&quot;,
                               number = 10,
                               repeats = 3)</code></pre>
-<p>#Fit random forest and pick the best model based on cross validation</p>
+<p>#Fit random forest and pick the best model based on cross validation The following code uses caret to build a random forest. The tunelength argument specifies that a grid search of 100 different parameter combinations should be tried. The one with the best out-of-sample accruacy is chosen.</p>
 <pre class="r"><code>rpart.cv &lt;- train(y = train$classe, 
                   x = train[, features],
                   method = &quot;rpart&quot;,
                   trControl = caret.control,
-                  tuneLength = 15)
+                  tuneLength = 100)
 rpart.best &lt;- rpart.cv$finalModel</code></pre>
-<p>#Predictions on test</p>
+<p>#Predictions on train First, I looked at our performance on test after choosing the best cross-validated model. THe model shows high accuracy, sensitivity, and specificity.</p>
 <pre class="r"><code>train$pred_classe &lt;- predict(rpart.best, train, type = &quot;class&quot;)
 
 confusionMatrix(train$pred_classe, train$classe)</code></pre>
@@ -792,6 +792,7 @@ confusionMatrix(train$pred_classe, train$classe)</code></pre>
 ## Detection Rate         0.2605   0.1230   0.1416   0.1042   0.1328
 ## Detection Prevalence   0.3056   0.1781   0.2142   0.1388   0.1633
 ## Balanced Accuracy      0.9266   0.7837   0.8619   0.7972   0.8426</code></pre>
+<p>#Predictions on test Finally, I use the best model to predict on the test set.</p>
 <pre class="r"><code>predict(rpart.best, test, type = &quot;class&quot;)</code></pre>
 <pre><code>##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
 ##  B  A  B  A  A  C  D  A  A  A  C  B  C  A  E  E  A  B  B  B 
